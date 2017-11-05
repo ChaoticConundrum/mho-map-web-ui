@@ -18,7 +18,7 @@ let getDataRange = function(ids, start, end, callback) {
 
   xhr.onload = function () {
     let response = JSON.parse(this.responseText);
-    //console.log(response);
+    console.log(response);
 
     let points = [];
     let node_len = response.length;
@@ -170,7 +170,7 @@ let transformTopology = function(topology) {
   let root = {}
 
   for (let i in node_list) {
-    if (node_list[i]['node_id'] == 0) {
+    if (node_list[i]['node_id'] == node_list[i]['parent_id']) {
       root = node_list[i];
       break;
     }
@@ -178,10 +178,6 @@ let transformTopology = function(topology) {
 
   // generate the nodeStructure
   let getNode = function(node) {
-    if (!node['devices']) {
-      return {};
-    }
-
     let arr = []
     for (let i in node.children) {
       arr.push(getNode(node.children[i]));
@@ -196,7 +192,7 @@ let transformTopology = function(topology) {
       devices += node['devices'][i]['description'];
     }
 
-    if (node['devices'].length != 0) {
+    if (node['devices'] && node['devices'].length != 0) {
       devices = ' (' + devices + ')';
     }
 
@@ -207,6 +203,7 @@ let transformTopology = function(topology) {
     }
   }
 
+  console.log(root);
   chartConfig["root"] = root;
   chartConfig["nodeStructure"] = getNode(root);
 
@@ -291,7 +288,7 @@ window.onload = function () {
     // TODO get data attribute working.
     let node_id = this.id.replace("node-", "");
     let node = final_topology[node_id];
-    mainChart.start(node);
+    mainChart.start([node]);
   });
 
   $('body').on('click', '.add-device', function () {
@@ -324,21 +321,22 @@ window.onload = function () {
 
 var mainChart = {
   interval: null,
-  start: function(node) {
+  start: function(nodes) {
     mainChart.stop();
 
     let element = document.getElementById('current-usage');
     let time = new Date().getTime();
-    let data = [[time, 20, 30]];
+    let data = [[time, null]];
+    let labels = ['time'];
+    for (i in nodes) {
+      labels.push(nodes[i]['node_id'].toString());
+    }
 
     let current_usage = new Dygraph(element, data, {
-      // TODO fix up fake data, make start() pass node array
       drawPoints: true,
       animatedZooms: true,
-      rollPeriod: 5,
+      rollPeriod: 1,
       showRoller: true,
-      title: (node['description'] + ', node 1'),
-      // time - 1 minute
       axes: {
         x: {
           axisLabelWidth: 100,
@@ -350,15 +348,27 @@ var mainChart = {
           }
         }
       },
-      labels: ['Time', node['node_id'].toString(), '1']
+      labels: labels
     });
 
+    let nodeIds = []
+    for (i in nodes) {
+      nodeIds.push(parseInt(nodes[i]['node_id']));
+    }
+
     mainChart.interval = setInterval(function () {
-      getDataRange([0, 1], new Date().getTime() - 10, new Date().getTime() + 10, (points) => {
-        data = data.concat(points);
+      getDataRange(nodeIds, (new Date().getTime() - 60000) / 1000, new Date().getTime() / 1000, (points) => {
+        points[points.length - 1][0] *= 1000;
+        data.push(points[points.length - 1]);
+        //console.log(points);
+        //for (let i in points) {
+          //points[i][0] *= 1000;
+        //}
+        //data = data.concat(points);
+        console.log(data);
         current_usage.updateOptions({
           'file': data,
-          'dateWindow': [new Date().getTime() - 10 * 5000, new Date().getTime()],
+          'dateWindow': [new Date().getTime() - 60000, new Date().getTime()],
           'valueRange': [null, null]
         });
       });
@@ -379,6 +389,7 @@ let generateTopology = function () {
         topology[i]['devices'] = [];
       }
       console.log(topology);
+      console.log(devices);
 
       let inactive_element = document.getElementById('inactive');
       while (inactive_element.hasChildNodes()) {
@@ -389,7 +400,10 @@ let generateTopology = function () {
 
       for (let i in devices) {
         device = devices[i];
+        console.log(device);
         node_id = device['node_id'];
+
+        console.log(node_id);
 
         if (node_id != -1) {
           topology[node_id.toString()]['devices'].push(device);
@@ -398,8 +412,6 @@ let generateTopology = function () {
         }
       }
 
-      final_topology = topology;
-
       for (let i in inactive) {
         let element = document.createElement('div');
         element.classList.add('item');
@@ -407,7 +419,11 @@ let generateTopology = function () {
         inactive_element.appendChild(element);
       }
 
+      console.log(topology);
+
       chartConfig = transformTopology(topology)
+
+      console.log(chartConfig);
 
       let root = chartConfig['root'];
 
@@ -415,7 +431,7 @@ let generateTopology = function () {
         return;
       }
 
-      mainChart.start(root);
+      mainChart.start([root]);
 
       new Treant(chartConfig);
     });

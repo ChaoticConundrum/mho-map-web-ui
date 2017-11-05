@@ -2,11 +2,11 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-#from ui import psbsocket
-from ui import mockpsbsocket
+from ui import psbsocket
+#from ui import mockpsbsocket
 
-#psbsocket = psbsocket.PSBSocket()
-psbsocket = mockpsbsocket.MockPSBSocket()
+psbsocket = psbsocket.PSBSocket()
+#psbsocket = mockpsbsocket.MockPSBSocket()
 
 
 def index(request):
@@ -19,9 +19,8 @@ def psb_version(request):
 
 
 def data_range(request, start, end):
-    print(request.GET.getlist('id'))
-    return JsonResponse(psbsocket.get_data_range(
-        request.GET.getlist('id'), int(start), int(end)))
+    ids = list(map(lambda i: int(i), request.GET.getlist('id')))
+    return JsonResponse(psbsocket.get_data_range(ids, float(start), float(end)))
 
 
 def current_data(request, device_id):

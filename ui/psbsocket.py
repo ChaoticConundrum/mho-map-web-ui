@@ -6,7 +6,7 @@ import time
 class PSBSocket():
     #TCP_CONNECTION = ("127.0.0.1", 8181)
     TCP_CONNECTION = ("10.209.75.207", 8181)
-    RECIEVE_SIZE = 1024
+    RECIEVE_SIZE = 4096 * 8
     sequence = 0
 
     def __init__(self):

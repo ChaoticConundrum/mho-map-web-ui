@@ -17,11 +17,11 @@ class MockPSBSocket():
                 #{"time": (start + end) / 2, "power": random.randrange(0, 500)},
                 #{"time": end, "power": random.randrange(0, 500)}
             ],
-            "1": [
-                {"time": start, "power": random.randrange(0, 500)},
+            #"1": [
+                #{"time": start, "power": random.randrange(0, 500)},
                 #{"time": (start + end) / 2, "power": random.randrange(0, 500)},
                 #{"time": end - 0.1, "power": random.randrange(0, 500)}
-            ]
+            #]
         }
 
     def get_current_data(self, device_id):
