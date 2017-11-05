@@ -4,3 +4,7 @@
   unicode-bidi:bidi-override;
   direction:rtl;
 }
+
+.node_context_menu {
+  cursor: default;
+}

@@ -2,6 +2,7 @@
   "name": "mho-map-ui",
   "private": true,
   "dependencies": {
-    "semantic": "semantic-ui#^2.2.13"
+    "semantic": "semantic-ui#^2.2.13",
+    "jQuery-contextMenu": "^2.6.3"
   }
 }

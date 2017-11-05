@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "dygraphs": "^2.0.0"
+    "dygraphs": "^2.0.0",
+    "raphael": "^2.2.7",
+    "treantjs": "^1.0.0"
   }
 }
