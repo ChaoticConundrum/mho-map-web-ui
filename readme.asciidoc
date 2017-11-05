@@ -1,0 +1,14 @@
+=== Setup
+. Install `npm` from distribution package manager
+. `sudo npm install -g bower`
+. `bower install`
+. `npm install`
+. `sudo pip install django`
+. `python manage.py makemigrations`
+. `python manage.py migrate`
+
+=== Running (Development)
+`python manage.py runserver`
+
+=== Running (Production)
+TODO

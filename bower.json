@@ -1,0 +1,7 @@
+{
+  "name": "mho-map-ui",
+  "private": true,
+  "dependencies": {
+    "semantic": "semantic-ui#^2.2.13"
+  }
+}

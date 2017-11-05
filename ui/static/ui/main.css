@@ -1,0 +1,6 @@
+.mho {
+  transform: scale(-1, 1);
+  display: inline-block;
+  unicode-bidi:bidi-override;
+  direction:rtl;
+}

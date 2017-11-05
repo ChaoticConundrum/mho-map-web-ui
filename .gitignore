@@ -1,0 +1,6 @@
+db.sqlite3
+bower_components
+node_modules
+package-lock.json
+*.pyc
+secret_key
