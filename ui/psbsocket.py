@@ -25,9 +25,9 @@ class PSBSocket():
     def get_drivers(self):
         return self.send_message("get_all_drivers")
 
-    def get_data_range(self, device_ids, start, end):
+    def get_data_range(self, ids, start, end):
         return self.send_message("get_data_range", {
-            "ids": device_ids,
+            "ids": ids,
             "start": start,
             "end": end,
         })

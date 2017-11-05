@@ -18,8 +18,9 @@ def psb_version(request):
     return JsonResponse(psbsocket.get_psb_version())
 
 
-def data_range(request, device_id, start, end):
-    return JsonResponse(psbsocket.get_data_range(device_id, start, end))
+def data_range(request, start, end):
+    return JsonResponse(psbsocket.get_data_range(
+        request.GET.getlist('id'), int(start), int(end)))
 
 
 def current_data(request, device_id):

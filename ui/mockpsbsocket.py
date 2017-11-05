@@ -14,15 +14,20 @@ class MockPSBSocket():
         return {
             "0": [
                 {"time": start, "power": random.randrange(0, 500)},
-                {"time": (start + end) / 2, "power": random.randrange(0, 500)},
-                {"time": end, "power": random.randrange(0, 500)}
+                #{"time": (start + end) / 2, "power": random.randrange(0, 500)},
+                #{"time": end, "power": random.randrange(0, 500)}
+            ],
+            "1": [
+                {"time": start, "power": random.randrange(0, 500)},
+                #{"time": (start + end) / 2, "power": random.randrange(0, 500)},
+                #{"time": end - 0.1, "power": random.randrange(0, 500)}
             ]
         }
 
     def get_current_data(self, device_id):
         cur_time = time.time() * 1000
         points = self.get_data_range([device_id], cur_time - 1000, cur_time)
-        return points["0"][-1]
+        return points[device_id][-1]
 
     def get_topology(self):
         cur_time = time.time() * 1000

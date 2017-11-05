@@ -5,6 +5,23 @@
   direction:rtl;
 }
 
-.node_context_menu {
+.node-context-menu {
   cursor: default;
+  background: #e0e1e2;
+  padding: 6px 20px 10px 20px;
+  border-radius: 0.4rem;
+  color: #434343;
+}
+
+#current-usage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.dygraph-table-fix {
+  position: relative;
+  height: 250px;
 }

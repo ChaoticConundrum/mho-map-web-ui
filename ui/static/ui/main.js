@@ -13,7 +13,7 @@ let getCurrentData = function(id, callback) {
   xhr.send();
 };
 
-let getDataRange = function(id, start, end, callback) {
+let getDataRange = function(ids, start, end, callback) {
   let xhr = new XMLHttpRequest();
 
   xhr.onload = function () {
@@ -21,15 +21,80 @@ let getDataRange = function(id, start, end, callback) {
     //console.log(response);
 
     let points = [];
+    let node_len = response.length;
 
-    for (let i in response) {
-      points.push([response[i].time, response[i].power])
+    // TODO make this better
+    // create the main points
+    for (let n in response) {
+
+      for (let p in response[n]) {
+
+        //console.log(response[n][p]);
+        let new_point = [response[n][p]["time"]];
+
+        for (let i in node_len) {
+          new_point.push(null);
+        }
+
+        new_point[parseInt(n) + 1] = response[n][p]["power"];
+        points.push(new_point);
+      }
     }
 
-    callback(points);
+    mapped_points = {}
+    //console.log(points);
+
+    // fix duplicate timestamps
+    for (let i in points) {
+      if (!mapped_points[points[i][0]]) {
+        mapped_points[points[i][0]] = []
+        for (let j in node_len) {
+          if (j == 0) {
+            continue;
+          }
+          mapped_points[points[i][0]].push(null);
+        }
+      }
+
+      for (let j in points[i]) {
+        if (j == 0) {
+          continue;
+        }
+        let p = points[i][j];
+        if (p != null) {
+          mapped_points[points[i][0]][j - 1] = p
+        }
+      }
+    }
+
+    //console.log(mapped_points);
+
+    // turn map to array
+    let final_arr = [];
+    for (let i in mapped_points) {
+      let arr = [parseFloat(i)];
+      for (let j in mapped_points[i]) {
+        arr.push(mapped_points[i][j]);
+      }
+      final_arr.push(arr);
+    }
+
+    // sort everything
+    final_arr.sort(function(a, b) {
+      return a[0] - b[0];
+    });
+
+    //console.log(final_arr);
+
+    callback(final_arr);
   };
 
-  xhr.open('GET', 'data_range/' + id + '/' + start + '/' + end + '/');
+  let idsString = '';
+  for (i in ids) {
+    idsString += '?id=' + ids[i] + '&';
+  }
+
+  xhr.open('GET', 'data_range/' + start + '/' + end + '/' + idsString);
   xhr.send();
 };
 
@@ -170,7 +235,7 @@ window.onload = function () {
   }];
 
   $.contextMenu({
-    selector: '.node_context_menu',
+    selector: '.node-context-menu',
     callback: function(key, options) {
       // TODO
       let id = options["$trigger"][0].id;
@@ -258,12 +323,15 @@ var mainChart = {
 
     let element = document.getElementById('current-usage');
     let time = new Date().getTime();
-    let data = [[time, 20]];
+    let data = [[time, 20, 30]];
 
     let current_usage = new Dygraph(element, data, {
+      // TODO fix up fake data, make start() pass node array
       drawPoints: true,
       animatedZooms: true,
-      title: node['description'],
+      rollPeriod: 5,
+      showRoller: true,
+      title: (node['description'] + ', node 1'),
       // time - 1 minute
       axes: {
         x: {
@@ -276,12 +344,12 @@ var mainChart = {
           }
         }
       },
-      labels: ['Time', 'Power']
+      labels: ['Time', node['node_id'].toString(), '1']
     });
 
     mainChart.interval = setInterval(function () {
-      getCurrentData(node['node_id'], (point) => {
-        data.push(point);
+      getDataRange([0, 1], new Date().getTime() - 10, new Date().getTime() + 10, (points) => {
+        data = data.concat(points);
         current_usage.updateOptions({
           'file': data,
           'dateWindow': [new Date().getTime() - 10 * 5000, new Date().getTime()],
