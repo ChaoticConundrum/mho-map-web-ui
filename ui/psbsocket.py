@@ -4,8 +4,8 @@ import time
 
 
 class PSBSocket():
-    #TCP_CONNECTION = ("127.0.0.1", 8181)
-    TCP_CONNECTION = ("10.209.75.207", 8181)
+    TCP_CONNECTION = ("127.0.0.1", 8181)
+    #TCP_CONNECTION = ("10.209.75.207", 8181)
     RECIEVE_SIZE = 4096 * 8
     sequence = 0
 
@@ -56,6 +56,7 @@ class PSBSocket():
         if args:
             msg["args"] = args
 
+        seq = self.sequence
         self.sequence += 1
 
         print(str.encode(json.dumps(msg)))
@@ -67,4 +68,9 @@ class PSBSocket():
         data = self.sock.recv(self.RECIEVE_SIZE)
         print(data)
 
-        return json.loads(data)["resp"]
+        json_encoded = json.loads(data)
+
+        if json_encoded["seq"] != seq:
+            return {}
+
+        return json_encoded["resp"]
