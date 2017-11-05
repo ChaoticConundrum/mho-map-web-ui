@@ -4,14 +4,14 @@ import time
 
 
 class PSBSocket():
-    TCP_CONNECTION = ("127.0.0.1", 8181)
+    #TCP_CONNECTION = ("127.0.0.1", 8181)
+    TCP_CONNECTION = ("10.209.75.207", 8181)
     RECIEVE_SIZE = 1024
-    sequence = 250
+    sequence = 0
 
     def __init__(self):
-        if not self.testing:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect(self.TCP_CONNECTION)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect(self.TCP_CONNECTION)
 
     def get_psb_version(self):
         return self.send_message("version")

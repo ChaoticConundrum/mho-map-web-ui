@@ -79,7 +79,7 @@ let getDataRange = function(ids, start, end, callback) {
       final_arr.push(arr);
     }
 
-    // sort everything
+    // sort everything (timestamp is 0th index)
     final_arr.sort(function(a, b) {
       return a[0] - b[0];
     });
@@ -102,8 +102,9 @@ let getTopology = function(callback) {
   let xhr = new XMLHttpRequest();
 
   xhr.onload = function () {
-    //console.log(this.responseText);
+    console.log(this.responseText);
     let response = JSON.parse(this.responseText);
+    console.log(response);
     callback(response);
   };
 
@@ -128,7 +129,7 @@ let getDrivers = function(callback) {
   let xhr = new XMLHttpRequest();
 
   xhr.onload = function () {
-    //console.log(this.responseText);
+    console.log(this.responseText);
     let response = JSON.parse(this.responseText);
     callback(response);
   };
@@ -177,6 +178,10 @@ let transformTopology = function(topology) {
 
   // generate the nodeStructure
   let getNode = function(node) {
+    if (!node['devices']) {
+      return {};
+    }
+
     let arr = []
     for (let i in node.children) {
       arr.push(getNode(node.children[i]));
@@ -239,6 +244,7 @@ window.onload = function () {
     callback: function(key, options) {
       // TODO
       let id = options["$trigger"][0].id;
+      let node_id = id.replace("node-", "");
       switch (key) {
         case 'addbranch':
           break;
@@ -372,6 +378,7 @@ let generateTopology = function () {
       for (let i in topology) {
         topology[i]['devices'] = [];
       }
+      console.log(topology);
 
       let inactive_element = document.getElementById('inactive');
       while (inactive_element.hasChildNodes()) {
@@ -402,9 +409,28 @@ let generateTopology = function () {
 
       chartConfig = transformTopology(topology)
 
-      mainChart.start(chartConfig['root']);
+      let root = chartConfig['root'];
+
+      if (Object.keys(root).length === 0 && root.constructor === Object) {
+        return;
+      }
+
+      mainChart.start(root);
 
       new Treant(chartConfig);
     });
   });
+}
+
+let addBranch = function (id) {
+  // TODO
+  let xhr = new XMLHttpRequest();
+
+  xhr.onload = function () {
+    let response = JSON.parse(this.responseText);
+    console.log(response);
+  };
+
+  xhr.open('post', 'branch/' + id + '/');
+  xhr.send();
 }

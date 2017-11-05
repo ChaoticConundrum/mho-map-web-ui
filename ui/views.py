@@ -2,10 +2,10 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
-# from ui import psbsocket
+#from ui import psbsocket
 from ui import mockpsbsocket
 
-# psbsocket = psbsocket.PSBSocket()
+#psbsocket = psbsocket.PSBSocket()
 psbsocket = mockpsbsocket.MockPSBSocket()
 
 
@@ -19,6 +19,7 @@ def psb_version(request):
 
 
 def data_range(request, start, end):
+    print(request.GET.getlist('id'))
     return JsonResponse(psbsocket.get_data_range(
         request.GET.getlist('id'), int(start), int(end)))
 
@@ -42,8 +43,14 @@ def drivers(request):
 # TODO fix this
 @csrf_exempt
 def device(request):
-    print(request)
     if request.method == "POST":
-        return JsonResponse(psbsocket.add_device(request.POST))
+        args = {
+            'driver_id': int(request.POST['driver_id']),
+            'node_id': int(request.POST['node_id']),
+            'calibration': int(request.POST['node_id']),
+            'description': request.POST['description'],
+            'address': request.POST['address'],
+        }
+        return JsonResponse(psbsocket.add_device(args))
 
     return JsonResponse({})
