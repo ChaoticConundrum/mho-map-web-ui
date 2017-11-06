@@ -30,7 +30,7 @@ let getDataRange = function(ids, start, end, callback) {
       for (let p in response[n]) {
 
         //console.log(response[n][p]);
-        let new_point = [response[n][p]["time"]];
+        let new_point = [response[n][p]["time"] * 1000];
 
         for (let i in node_len) {
           new_point.push(null);
@@ -357,18 +357,16 @@ var mainChart = {
     }
 
     mainChart.interval = setInterval(function () {
-      getDataRange(nodeIds, (new Date().getTime() - 60000) / 1000, new Date().getTime() / 1000, (points) => {
-        points[points.length - 1][0] *= 1000;
-        data.push(points[points.length - 1]);
-        //console.log(points);
-        //for (let i in points) {
-          //points[i][0] *= 1000;
-        //}
-        //data = data.concat(points);
+      getDataRange(nodeIds, (new Date().getTime() - 180000) / 1000, new Date().getTime() / 1000, (points) => {
+        if (isEmptyObject(points)) {
+            return;
+        }
+        console.log(points);
+        data = points;
         console.log(data);
         current_usage.updateOptions({
           'file': data,
-          'dateWindow': [new Date().getTime() - 60000, new Date().getTime()],
+          'dateWindow': [new Date().getTime() - 180000, new Date().getTime()],
           'valueRange': [null, null]
         });
       });
@@ -427,7 +425,7 @@ let generateTopology = function () {
 
       let root = chartConfig['root'];
 
-      if (Object.keys(root).length === 0 && root.constructor === Object) {
+      if (isEmptyObject(root)) {
         return;
       }
 
@@ -449,4 +447,8 @@ let addBranch = function (id) {
 
   xhr.open('post', 'branch/' + id + '/');
   xhr.send();
+}
+
+let isEmptyObject = function(o) {
+  return (Object.keys(o).length === 0 && o.constructor === Object);
 }

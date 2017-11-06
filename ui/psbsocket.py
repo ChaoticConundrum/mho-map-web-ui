@@ -6,8 +6,9 @@ import time
 class PSBSocket():
     TCP_CONNECTION = ("127.0.0.1", 8181)
     #TCP_CONNECTION = ("10.209.75.207", 8181)
-    RECIEVE_SIZE = 4096 * 8
+    RECIEVE_SIZE = 4096 * 16
     sequence = 0
+    recv_list = {}
 
     def __init__(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,18 +60,35 @@ class PSBSocket():
         seq = self.sequence
         self.sequence += 1
 
-        print(str.encode(json.dumps(msg)))
-        sent = self.sock.send(str.encode(json.dumps(msg)))
+        msg_enc = str.encode(json.dumps(msg))
+        print(msg_enc)
+        sent = self.sock.send(msg_enc)
 
         if sent == 0:
             raise RuntimeError("socket connection broken")
 
+        attempts = 0
+
         data = self.sock.recv(self.RECIEVE_SIZE)
-        print(data)
+        data_dict = json.loads(data)
 
-        json_encoded = json.loads(data)
+        self.recv_list[data_dict["seq"]] = data_dict
 
-        if json_encoded["seq"] != seq:
-            return {}
+        # Since multiple threads are sending messages in a single socket,
+        # we may recieve data that was meant for a different thread.
+        # Thus, we instead check to see if we received our data, before
+        # returning the data we want back to the specific thread.
+        while True:
+            if seq in self.recv_list:
+                recv = self.recv_list.pop(seq)
+                print(recv)
+                return recv["resp"]
 
-        return json_encoded["resp"]
+            if attempts == 10:
+                break
+
+            attempts += 1
+            time.sleep(0.2)
+
+        print("Attempts surpassed for " + str(seq) + ", returning empty object.")
+        return {}
