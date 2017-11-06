@@ -26,7 +26,6 @@ let getDataRange = function(ids, start, end, callback) {
     // TODO make this better
     // create the main points
     for (let n in response) {
-
       for (let p in response[n]) {
 
         //console.log(response[n][p]);
@@ -73,25 +72,23 @@ let getDataRange = function(ids, start, end, callback) {
     let final_arr = [];
     for (let i in mapped_points) {
       let arr = [parseFloat(i)];
-      for (let j in mapped_points[i]) {
-        arr.push(mapped_points[i][j]);
+      // for (a in b) skips nulls!
+      //for (let j in mapped_points[i]) {
+      for (let j = 0; j < mapped_points[i].length; j++) {
+        let point = mapped_points[i][j];
+        arr.push(point);
       }
       final_arr.push(arr);
     }
 
-    // sort everything (timestamp is 0th index)
-    final_arr.sort(function(a, b) {
-      return a[0] - b[0];
-    });
-
-    //console.log(final_arr);
+    console.log(final_arr);
 
     callback(final_arr);
   };
 
-  let idsString = '';
+  let idsString = '?';
   for (i in ids) {
-    idsString += '?id=' + ids[i] + '&';
+    idsString += 'id=' + ids[i] + '&';
   }
 
   xhr.open('GET', 'data_range/' + start + '/' + end + '/' + idsString);
@@ -116,8 +113,9 @@ let getDevices = function(callback) {
   let xhr = new XMLHttpRequest();
 
   xhr.onload = function () {
-    //console.log(this.responseText);
+    console.log(this.responseText);
     let response = JSON.parse(this.responseText);
+    console.log(response);
     callback(response);
   };
 
@@ -288,7 +286,7 @@ window.onload = function () {
     // TODO get data attribute working.
     let node_id = this.id.replace("node-", "");
     let node = final_topology[node_id];
-    mainChart.start([node]);
+    mainChart.start(node);
   });
 
   $('body').on('click', '.add-device', function () {
@@ -321,15 +319,18 @@ window.onload = function () {
 
 var mainChart = {
   interval: null,
-  start: function(nodes) {
+  start: function(node) {
     mainChart.stop();
 
     let element = document.getElementById('current-usage');
     let time = new Date().getTime();
-    let data = [[time, null]];
+    let data = [[time]];
     let labels = ['time'];
-    for (i in nodes) {
-      labels.push(nodes[i]['node_id'].toString());
+    let devices = [];
+    for (i in node['devices']) {
+      labels.push(node['devices'][i]['device_id'].toString());
+      devices.push(parseInt(node['devices'][i]['device_id']));
+      data[0].push(null);
     }
 
     let current_usage = new Dygraph(element, data, {
@@ -351,17 +352,11 @@ var mainChart = {
       labels: labels
     });
 
-    let nodeIds = []
-    for (i in nodes) {
-      nodeIds.push(parseInt(nodes[i]['node_id']));
-    }
-
     mainChart.interval = setInterval(function () {
-      getDataRange(nodeIds, (new Date().getTime() - 180000) / 1000, new Date().getTime() / 1000, (points) => {
+      getDataRange(devices, (new Date().getTime() - 180000) / 1000, new Date().getTime() / 1000, (points) => {
         if (isEmptyObject(points)) {
             return;
         }
-        console.log(points);
         data = points;
         console.log(data);
         current_usage.updateOptions({
@@ -429,7 +424,8 @@ let generateTopology = function () {
         return;
       }
 
-      mainChart.start([root]);
+      console.log(root);
+      mainChart.start(root);
 
       new Treant(chartConfig);
     });
