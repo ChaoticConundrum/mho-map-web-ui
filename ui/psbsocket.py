@@ -6,7 +6,7 @@ import time
 class PSBSocket():
     TCP_CONNECTION = ("127.0.0.1", 8181)
     #TCP_CONNECTION = ("10.209.75.207", 8181)
-    RECIEVE_SIZE = 4096 * 16
+    RECIEVE_SIZE = 1024 * 32
     sequence = 0
     recv_list = {}
 
@@ -61,6 +61,7 @@ class PSBSocket():
         self.sequence += 1
 
         msg_enc = str.encode(json.dumps(msg))
+        print("request for " + str(seq) + ":")
         print(msg_enc)
         sent = self.sock.send(msg_enc)
 
@@ -69,10 +70,19 @@ class PSBSocket():
 
         attempts = 0
 
-        data = self.sock.recv(self.RECIEVE_SIZE)
-        data_dict = json.loads(data)
+        raw_data = self.sock.recv(self.RECIEVE_SIZE)
 
-        self.recv_list[data_dict["seq"]] = data_dict
+        # if the data is returned too quickly (containing two or more \r\n)
+        data_list = raw_data.split(b"\r\n")[0:-1]
+
+        for data in data_list:
+            try:
+                data_dict = json.loads(data)
+                self.recv_list[data_dict["seq"]] = data_dict
+            except json.decoder.JSONDecodeError:
+                print(data)
+                print("Error decoding json! PSB Server error?")
+                return {}
 
         # Since multiple threads are sending messages in a single socket,
         # we may recieve data that was meant for a different thread.
@@ -81,6 +91,7 @@ class PSBSocket():
         while True:
             if seq in self.recv_list:
                 recv = self.recv_list.pop(seq)
+                print("response for " + str(seq) + ":")
                 print(recv)
                 return recv["resp"]
 

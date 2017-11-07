@@ -20,24 +20,30 @@ let getDataRange = function(ids, start, end, callback) {
     let response = JSON.parse(this.responseText);
     console.log(response);
 
+    if (isEmptyObject(response)) {
+      console.log("empty response. server error?");
+      return;
+    }
+
     let points = [];
-    let node_len = response.length;
+    let node_len = Object.keys(response).length;
 
     // TODO make this better
     // create the main points
+    let y = 1;
     for (let n in response) {
       for (let p in response[n]) {
-
         //console.log(response[n][p]);
         let new_point = [response[n][p]["time"] * 1000];
 
-        for (let i in node_len) {
+        for (let i = 0; i < node_len; i++) {
           new_point.push(null);
         }
 
-        new_point[parseInt(n) + 1] = response[n][p]["power"];
+        new_point[y] = response[n][p]["power"];
         points.push(new_point);
       }
+      y++;
     }
 
     mapped_points = {}
@@ -47,19 +53,17 @@ let getDataRange = function(ids, start, end, callback) {
     for (let i in points) {
       if (!mapped_points[points[i][0]]) {
         mapped_points[points[i][0]] = []
-        for (let j in node_len) {
-          if (j == 0) {
-            continue;
-          }
+        for (let j = 0; j < node_len; j++) {
           mapped_points[points[i][0]].push(null);
         }
       }
 
-      for (let j in points[i]) {
+      for (let j = 0; j < points[i].length; j++) {
         if (j == 0) {
           continue;
         }
         let p = points[i][j];
+        // don't overwrite an existing point
         if (p != null) {
           mapped_points[points[i][0]][j - 1] = p
         }
@@ -72,8 +76,6 @@ let getDataRange = function(ids, start, end, callback) {
     let final_arr = [];
     for (let i in mapped_points) {
       let arr = [parseFloat(i)];
-      // for (a in b) skips nulls!
-      //for (let j in mapped_points[i]) {
       for (let j = 0; j < mapped_points[i].length; j++) {
         let point = mapped_points[i][j];
         arr.push(point);
@@ -377,6 +379,11 @@ var mainChart = {
 
 let generateTopology = function () {
   getTopology((topology) => {
+    if (isEmptyObject(topology)) {
+      console.log("topology empty, server error?");
+      return;
+    }
+
     getDevices((devices) => {
       for (let i in topology) {
         topology[i]['devices'] = [];
@@ -393,10 +400,7 @@ let generateTopology = function () {
 
       for (let i in devices) {
         device = devices[i];
-        console.log(device);
         node_id = device['node_id'];
-
-        console.log(node_id);
 
         if (node_id != -1) {
           topology[node_id.toString()]['devices'].push(device);
