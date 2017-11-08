@@ -321,53 +321,60 @@ window.onload = function () {
 
 var mainChart = {
   interval: null,
+  updateTime: 1000,
+  initTime: 180000,
+
   start: function(node) {
     mainChart.stop();
-
-    let element = document.getElementById('current-usage');
-    let time = new Date().getTime();
-    let data = [[time]];
+    let curTime = new Date().getTime();
     let labels = ['time'];
     let devices = [];
     for (i in node['devices']) {
       labels.push(node['devices'][i]['device_id'].toString());
       devices.push(parseInt(node['devices'][i]['device_id']));
-      data[0].push(null);
     }
 
-    let current_usage = new Dygraph(element, data, {
-      drawPoints: true,
-      animatedZooms: true,
-      rollPeriod: 1,
-      showRoller: true,
-      axes: {
-        x: {
-          axisLabelWidth: 100,
-          axisLabelFormatter: function(time) {
-            return new Date(time).toLocaleTimeString();
-          },
-          valueFormatter: function (time) {
-            return new Date(time).toLocaleTimeString();
-          }
-        }
-      },
-      labels: labels
-    });
+    getDataRange(devices, (curTime - (mainChart.initTime / 4)) / 1000, curTime / 1000, (data) => {
+      let element = document.getElementById('current-usage');
 
-    mainChart.interval = setInterval(function () {
-      getDataRange(devices, (new Date().getTime() - 180000) / 1000, new Date().getTime() / 1000, (points) => {
-        if (isEmptyObject(points)) {
-            return;
-        }
-        data = points;
-        console.log(data);
-        current_usage.updateOptions({
-          'file': data,
-          'dateWindow': [new Date().getTime() - 180000, new Date().getTime()],
-          'valueRange': [null, null]
-        });
+      let current_usage = new Dygraph(element, data, {
+        drawPoints: true,
+        animatedZooms: true,
+        rollPeriod: 1,
+        showRoller: true,
+        dateWindow: [new Date().getTime() - mainChart.initTime, new Date().getTime()],
+        axes: {
+          x: {
+            axisLabelWidth: 100,
+            axisLabelFormatter: function(time) {
+              return new Date(time).toLocaleTimeString();
+            },
+            valueFormatter: function (time) {
+              return new Date(time).toLocaleTimeString();
+            }
+          }
+        },
+        labels: labels
       });
-    }, 1000);
+
+      mainChart.interval = setInterval(function () {
+        curTime = new Date().getTime();
+        getDataRange(devices, (curTime - mainChart.updateTime) / 1000, curTime / 1000, (points) => {
+          if (isEmptyObject(points)) {
+              return;
+          }
+
+          data = data.concat(points);
+          //console.log(data);
+
+          current_usage.updateOptions({
+            file: data,
+            dateWindow: [curTime - mainChart.initTime, curTime],
+            valueRange: [null, null]
+          });
+        });
+      }, mainChart.updateTime);
+    });
   },
 
   stop: function() {
